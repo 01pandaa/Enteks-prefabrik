@@ -1,6 +1,6 @@
 // Enteks Prefabrik — programatik SEO site üreticisi (bağımlılıksız)
 // Kullanım: node src/build.js   (SITE_URL=https://alanadi.com ile özel alan adı)
-import { mkdirSync, writeFileSync, copyFileSync, rmSync } from "node:fs";
+import { mkdirSync, writeFileSync, copyFileSync, rmSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -17,6 +17,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "dist");
 const SITE_URL = (process.env.SITE_URL || "https://www.enteksprefabrikev.com").replace(/\/$/, "");
 const BASE = new URL(SITE_URL).pathname.replace(/\/$/, ""); // "" veya "/enteks-prefabrik"
+// Stil her sayfaya gömülür: ayrı CSS dosyası yüklenemese bile tasarım bozulmaz.
+const CSS = readFileSync(join(ROOT, "src", "style.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").replace(/\s*([{};:,>])\s*/g, "$1").trim();
 const TODAY = new Date().toISOString().slice(0, 10);
 
 // ---------- yardımcılar ----------
@@ -90,7 +92,7 @@ function drawing(kind = "prefabrik-ev", label = "") {
       ${dim(80, 282, 320, 282, "8,40 m")}${dim(40, 62, 40, 250, "4,80 m", true)}`;
   }
   return `<figure class="drawing" aria-hidden="true">
-    <svg viewBox="0 0 400 310" role="img">
+    <svg viewBox="0 0 400 310" width="400" height="310" role="img">
       <defs><pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" class="grid"/></pattern></defs>
       <rect width="400" height="310" fill="url(#g)"/>
       <line class="ground" x1="20" y1="250" x2="380" y2="250"/>
@@ -211,13 +213,13 @@ function layout({ path, title, description, body, ld = [] }) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="${u("/style.css")}">
+<style>${CSS}</style>
 ${schemas}
 </head>
 <body>
 <a class="skip" href="#icerik">İçeriğe geç</a>
 <header class="site-head">
-  <a class="brand" href="${u("/")}"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 15 16 5l13 10v13H3z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M11 28V18h10v10" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>Enteks <b>Prefabrik</b></a>
+  <a class="brand" href="${u("/")}"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M3 15 16 5l13 10v13H3z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M11 28V18h10v10" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>Enteks <b>Prefabrik</b></a>
   <nav class="main-nav" aria-label="Ana menü">
     <a href="${u("/prefabrik-ev/")}">Prefabrik ev</a>
     <a href="${u("/celik-ev/")}">Çelik ev</a>
