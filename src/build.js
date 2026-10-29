@@ -15,7 +15,7 @@ import {
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "dist");
-const SITE_URL = (process.env.SITE_URL || "https://01pandaa.github.io/Enteks-prefabrik").replace(/\/$/, "");
+const SITE_URL = (process.env.SITE_URL || "https://www.enteksprefabrikev.com").replace(/\/$/, "");
 const BASE = new URL(SITE_URL).pathname.replace(/\/$/, ""); // "" veya "/enteks-prefabrik"
 const TODAY = new Date().toISOString().slice(0, 10);
 

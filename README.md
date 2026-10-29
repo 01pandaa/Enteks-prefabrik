@@ -28,7 +28,7 @@ npm run serve      # yerelde önizleme
 ## Yayın
 
 Site GitHub Pages'te **main dalının kökünden** yayınlanır (Settings → Pages → Deploy from a branch → `main` / `/ (root)`).
-Adres: https://01pandaa.github.io/Enteks-prefabrik/
+Adres: https://www.enteksprefabrikev.com/
 
 `src/` içinde bir değişiklik gönderildiğinde `.github/workflows/siteyi-uret.yml` sayfaları yeniden üretip köke kaydeder. Elle üretmek için: `npm run yayinla`.
 

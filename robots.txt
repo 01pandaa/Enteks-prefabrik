@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://01pandaa.github.io/Enteks-prefabrik/sitemap.xml
+Sitemap: https://www.enteksprefabrikev.com/sitemap.xml

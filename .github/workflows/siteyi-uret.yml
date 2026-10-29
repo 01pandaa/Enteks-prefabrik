@@ -17,8 +17,8 @@ jobs:
           node-version: 22
       - run: bash yayinla.sh
         env:
-          SITE_URL: ${{ vars.SITE_URL || 'https://01pandaa.github.io/Enteks-prefabrik' }}
-          CNAME: ${{ vars.CNAME }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.enteksprefabrikev.com' }}
+          CNAME: ${{ vars.CNAME || 'www.enteksprefabrikev.com' }}
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
