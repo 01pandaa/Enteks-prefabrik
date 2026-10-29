@@ -27,9 +27,11 @@ npm run serve      # yerelde önizleme
 
 ## Yayın
 
-GitHub Pages üzerinden yayınlanır (`.github/workflows/deploy.yml`).
-Adres: https://01pandaa.github.io/enteks-prefabrik/
+Site GitHub Pages'te **main dalının kökünden** yayınlanır (Settings → Pages → Deploy from a branch → `main` / `/ (root)`).
+Adres: https://01pandaa.github.io/Enteks-prefabrik/
 
-Özel alan adı için depo ayarlarında **Actions variables** bölümüne `SITE_URL` (ör. `https://www.enteksprefabrik.com`) ve `CNAME` (ör. `www.enteksprefabrik.com`) ekleyin, alan adının DNS kaydını GitHub Pages'e yönlendirin.
+`src/` içinde bir değişiklik gönderildiğinde `.github/workflows/siteyi-uret.yml` sayfaları yeniden üretip köke kaydeder. Elle üretmek için: `npm run yayinla`.
+
+Özel alan adı için depo ayarlarında **Actions variables** bölümüne `SITE_URL` (ör. `https://www.enteksprefabrik.com`) ve `CNAME` (ör. `www.enteksprefabrik.com`) ekleyin, ardından Actions sekmesinden "Siteyi üret" iş akışını bir kez çalıştırın.
 
 Yayından sonra `sitemap.xml` adresini Google Search Console'a ekleyin.

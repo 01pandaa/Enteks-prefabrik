@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node src/build.js",
-    "serve": "npx --yes serve dist"
+    "serve": "npx --yes serve dist",
+    "yayinla": "bash yayinla.sh"
   }
 }

@@ -1,0 +1,26 @@
+name: Siteyi üret
+# src/ içinde değişiklik olunca sayfaları yeniden üretip depo köküne kaydeder.
+on:
+  push:
+    branches: [main]
+    paths: ["src/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bash yayinla.sh
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://01pandaa.github.io/Enteks-prefabrik' }}
+          CNAME: ${{ vars.CNAME }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || (git commit -m "Siteyi yeniden üret" && git push)
