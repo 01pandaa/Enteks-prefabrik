@@ -1,13 +1,13 @@
 # Enteks Prefabrik — web sitesi
 
-Tarsus merkezli Enteks Prefabrik için programatik SEO sitesi. Mersin'in 13 ilçesi, 3 ev tipi (prefabrik, çelik, Yutong) ve Tarsus'un tüm mahalleleri için ayrı sayfalar üretir.
+Tarsus merkezli Enteks Prefabrik için programatik SEO sitesi. Mersin'in 13 ilçesi, 3 ev tipi (prefabrik, çelik, Ytong) ve Tarsus'un tüm mahalleleri için ayrı sayfalar üretir.
 
 ## Üretilen sayfalar (191)
 
 | Sayfa | Adres örneği |
 |---|---|
 | Ana sayfa | `/` |
-| Ev tipi | `/prefabrik-ev/`, `/celik-ev/`, `/yutong-ev/` |
+| Ev tipi | `/prefabrik-ev/`, `/celik-ev/`, `/ytong-ev/` |
 | İlçe | `/mersin/tarsus/` (13 ilçe) |
 | İlçe × ev tipi | `/mersin/tarsus/celik-ev/` (39 sayfa) |
 | Tarsus mahallesi | `/tarsus/gulek/` (123 mahalle) |

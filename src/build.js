@@ -1,6 +1,6 @@
 // Enteks Prefabrik — programatik SEO site üreticisi (bağımlılıksız)
 // Kullanım: node src/build.js   (SITE_URL=https://alanadi.com ile özel alan adı)
-import { mkdirSync, writeFileSync, copyFileSync, rmSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, copyFileSync, rmSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -44,6 +44,9 @@ function locative(name) {
   return `${name}'${hard ? "t" : "d"}${back ? "a" : "e"}`;
 }
 
+// Hizmet adı cümle içinde: "prefabrik ev", "çelik ev" ama marka olduğu için "Ytong ev"
+const sn = (s) => (s.slug === "ytong-ev" ? s.name : lc(s.name));
+const snp = (s) => (s.slug === "ytong-ev" ? s.plural : lc(s.plural));
 const tc = (s) => s.name.replace(/ ev$/, " Ev");
 const svc = Object.fromEntries(services.map((s) => [s.slug, s]));
 const dist = Object.fromEntries(districts.map((d) => [d.slug, d]));
@@ -72,7 +75,7 @@ function drawing(kind = "prefabrik-ev", label = "") {
       <rect class="win" x="90" y="150" width="30" height="28"/><rect class="win" x="215" y="150" width="34" height="28"/>
       <rect class="win" x="150" y="82" width="34" height="34"/><rect class="door" x="282" y="196" width="28" height="54"/>
       ${dim(70, 280, 330, 280, "10,80 m")}${dim(36, 70, 36, 250, "6,20 m", true)}`;
-  } else if (kind === "yutong-ev") {
+  } else if (kind === "ytong-ev") {
     body = `
       <path class="wall" d="M60 250 V120 H340 V250 Z"/>
       <path class="roof" d="M48 120 H352 V108 H48 Z"/>
@@ -100,6 +103,19 @@ function drawing(kind = "prefabrik-ev", label = "") {
     </svg>
     <figcaption>${esc(label || svc[kind]?.name || "")} · ön görünüş</figcaption>
   </figure>`;
+}
+
+// ---------- fotoğraflar (src/img) ----------
+const photoAlt = {
+  "prefabrik-ev": "Enteks Prefabrik tek katlı prefabrik ev, geniş verandalı bahçe evi",
+  "celik-ev": "Enteks Prefabrik iki katlı çelik ev ve galvaniz çelik taşıyıcı iskelet",
+  "ytong-ev": "Enteks Prefabrik iki katlı Ytong (gazbeton) villa ve gazbeton bloklar",
+};
+function photo(kind, { eager = false, sizes = "(min-width: 900px) 520px, 100vw" } = {}) {
+  return `<figure class="photo"><picture>
+    <source type="image/webp" srcset="${u(`/img/${kind}-560.webp`)} 560w, ${u(`/img/${kind}-1000.webp`)} 1000w" sizes="${sizes}">
+    <img src="${u(`/img/${kind}.jpg`)}" width="1000" height="1250" alt="${esc(photoAlt[kind])}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+  </picture></figure>`;
 }
 
 // ---------- ortak bloklar ----------
@@ -163,8 +179,8 @@ function serviceCards(placeSlug) {
   return `<ul class="svc-list">${services
     .map((s) => {
       const href = placeSlug ? `/mersin/${placeSlug}/${s.slug}/` : `/${s.slug}/`;
-      const title = placeSlug ? `${dist[placeSlug].name} ${lc(s.name)}` : s.name;
-      return `<li><a href="${u(href)}"><h3>${esc(ucFirst(title))}</h3><p>${esc(s.short)}</p></a></li>`;
+      const title = placeSlug ? `${dist[placeSlug].name} ${sn(s)}` : s.name;
+      return `<li><a href="${u(href)}">${photo(s.slug, { sizes: "(min-width: 820px) 360px, 100vw" })}<h3>${esc(ucFirst(title))}</h3><p>${esc(s.short)}</p></a></li>`;
     })
     .join("")}</ul>`;
 }
@@ -174,7 +190,7 @@ const districtLinks = (svcSlug, exclude) =>
     .filter((d) => d.slug !== exclude)
     .map((d) => {
       const href = svcSlug ? `/mersin/${d.slug}/${svcSlug}/` : `/mersin/${d.slug}/`;
-      return `<li><a href="${u(href)}">${esc(d.name)}${svcSlug ? ` <span>${esc(lc(svc[svcSlug].name))}</span>` : ""}</a></li>`;
+      return `<li><a href="${u(href)}">${esc(d.name)}${svcSlug ? ` <span>${esc(sn(svc[svcSlug]))}</span>` : ""}</a></li>`;
     })
     .join("")}</ul>`;
 
@@ -186,13 +202,14 @@ const businessLD = {
   name: C.name,
   url: abs("/"),
   telephone: C.phoneIntl,
+  image: services.map((s) => abs(`/img/${s.slug}.jpg`)),
   address: { "@type": "PostalAddress", addressLocality: C.base, addressRegion: C.city, addressCountry: "TR" },
   areaServed: districts.map((d) => ({ "@type": "City", name: `${d.name}, Mersin` })),
   sameAs: [C.instagram, C.tiktok],
   makesOffer: services.map((s) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: s.name } })),
 };
 
-function layout({ path, title, description, body, ld = [] }) {
+function layout({ path, title, description, body, ld = [], image = "prefabrik-ev" }) {
   const schemas = [businessLD, ...ld].map((o) => `<script type="application/ld+json">${JSON.stringify(o)}</script>`).join("\n");
   return `<!doctype html>
 <html lang="tr">
@@ -207,6 +224,10 @@ function layout({ path, title, description, body, ld = [] }) {
 <meta property="og:site_name" content="${C.name}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
+<meta property="og:image" content="${abs(`/img/${image}.jpg`)}">
+<meta property="og:image:width" content="1000">
+<meta property="og:image:height" content="1250">
+<meta name="twitter:card" content="summary_large_image">
 <meta property="og:url" content="${abs(path)}">
 <meta name="theme-color" content="#1d3a33">
 <link rel="icon" href="${u("/favicon.svg")}" type="image/svg+xml">
@@ -223,7 +244,7 @@ ${schemas}
   <nav class="main-nav" aria-label="Ana menü">
     <a href="${u("/prefabrik-ev/")}">Prefabrik ev</a>
     <a href="${u("/celik-ev/")}">Çelik ev</a>
-    <a href="${u("/yutong-ev/")}">Yutong ev</a>
+    <a href="${u("/ytong-ev/")}">Ytong ev</a>
     <a href="${u("/modeller/")}">Modeller</a>
     <a href="${u("/mersin/")}">Bölgeler</a>
     <a href="${u("/iletisim/")}">İletişim</a>
@@ -237,7 +258,7 @@ ${body}
   <div class="foot-cols">
     <div>
       <p class="foot-brand">Enteks Prefabrik</p>
-      <p>Tarsus merkezli; Mersin'in tüm ilçelerinde prefabrik ev, çelik ev ve Yutong ev üretimi ve kurulumu.</p>
+      <p>Mersin'den Tarsus'a ve tüm ilçelere prefabrik ev, çelik ev ve Ytong ev yapımı.</p>
       <p><a href="tel:${C.phoneIntl}">${C.phoneDisplay}</a></p>
       <p class="social"><a href="${C.instagram}" rel="noopener">Instagram</a> <a href="${C.tiktok}" rel="noopener">TikTok</a></p>
     </div>
@@ -271,24 +292,24 @@ const add = (p) => pages.push(p);
   add({
     path: "/",
     priority: "1.0",
-    title: "Mersin Prefabrik Ev, Çelik Ev ve Yutong Ev | Enteks Prefabrik Tarsus",
+    title: "Mersin Prefabrik Ev, Çelik Ev ve Ytong Ev | Tarsus ve Tüm İlçeler | Enteks Prefabrik",
     description:
-      "Tarsus merkezli Enteks Prefabrik; Mersin'in tüm ilçelerinde prefabrik ev, çelik ev ve Yutong ev yapıyor. Ücretsiz keşif ve teklif: 0545 641 29 09.",
+      "Enteks Prefabrik; Mersin'den Tarsus'a ve tüm ilçelere prefabrik ev, çelik ev ve Ytong ev yapıyor. Ücretsiz keşif ve teklif: 0545 641 29 09.",
     ld: [f.ld],
     body: `
 <section class="hero">
   <div class="hero-text">
-    <h1>Tarsus'tan Mersin'in her köşesine prefabrik, çelik ve Yutong ev</h1>
+    <h1>Mersin'den Tarsus'a, tüm ilçelere prefabrik, çelik ve Ytong ev</h1>
     <p class="lead">Arsanıza gelip ölçüyoruz, planı birlikte çiziyoruz, evinizi atölyede hazırlayıp yerinde kuruyoruz. Bağ evinden kalıcı aile evine kadar.</p>
     <div class="hero-actions">
       <a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a>
       <a class="btn btn-ghost" href="#teklif">Teklif formu</a>
     </div>
   </div>
-  ${drawing("prefabrik-ev", "2+1 prefabrik ev")}
+  ${photo("prefabrik-ev", { eager: true })}
 </section>
 <section class="band"><h2>Üç ev tipi, tek ekip</h2>${serviceCards()}</section>
-<section class="band"><h2>Mersin'de hizmet verdiğimiz ilçeler</h2><p class="section-lead">Merkezimiz Tarsus'ta. Keşif için Mersin'in 13 ilçesinin tamamına geliyoruz.</p>${districtLinks()}</section>
+<section class="band"><h2>Mersin'de hizmet verdiğimiz ilçeler</h2><p class="section-lead">Tarsus başta olmak üzere keşif için Mersin'in 13 ilçesinin tamamına geliyoruz.</p>${districtLinks()}</section>
 ${processBlock()}
 <section class="band two-col">
   <div><h2>Kimler için kuruyoruz</h2>
@@ -307,20 +328,21 @@ for (const s of services) {
   const relModels = models.filter((m) => m.services.includes(s.slug));
   add({
     path: `/${s.slug}/`,
+    image: s.slug,
     priority: "0.9",
     title: `Mersin ${tc(s)} Fiyatları ve Modelleri | Tarsus ${tc(s)} | Enteks Prefabrik`,
-    description: `Mersin ve Tarsus'ta ${lc(s.name)}: ${s.short} ${listTr(s.uses.slice(0, 3))} için ücretsiz keşif. ${C.phoneDisplay}`,
+    description: `Mersin ve Tarsus'ta ${sn(s)}: ${s.short} ${listTr(s.uses.slice(0, 3))} için ücretsiz keşif. ${C.phoneDisplay}`,
     ld: [bc.ld, f.ld, { "@context": "https://schema.org", "@type": "Service", name: `${s.name} yapımı`, serviceType: s.name, provider: { "@id": abs("/#isletme") }, areaServed: "Mersin" }],
     body: `${bc.html}
 <section class="hero">
-  <div class="hero-text"><h1>Mersin ${lc(s.name)} yapımı</h1><p class="lead">${esc(s.intro)}</p>
+  <div class="hero-text"><h1>Mersin ${sn(s)} yapımı</h1><p class="lead">${esc(s.intro)}</p>
   <div class="hero-actions"><a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a><a class="btn btn-ghost" href="#teklif">Teklif formu</a></div></div>
-  ${drawing(s.slug)}
+  ${photo(s.slug, { eager: true })}
 </section>
-<section class="band two-col"><div><h2>Neden ${lc(s.name)}</h2><ul class="ticks">${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>
+<section class="band two-col"><div><h2>Neden ${sn(s)}</h2><ul class="ticks">${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>
 <div><h2>Nerelerde kullanılır</h2><p>${esc(ucFirst(listTr(s.uses)))} olarak kuruyoruz.</p>
 <h3>Uygun modeller</h3><ul class="plain">${relModels.map((m) => `<li><a href="${u(`/modeller/${m.slug}/`)}">${esc(m.name)}</a> · ${esc(m.area)}</li>`).join("")}</ul></div></section>
-<section class="band"><h2>İlçe ilçe Mersin ${lc(s.name)}</h2>${districtLinks(s.slug)}</section>
+<section class="band"><h2>İlçe ilçe Mersin ${sn(s)}</h2>${districtLinks(s.slug)}</section>
 ${processBlock()}
 ${f.html}
 ${quoteForm({ service: s.slug })}`,
@@ -333,11 +355,11 @@ ${quoteForm({ service: s.slug })}`,
   add({
     path: "/mersin/",
     priority: "0.8",
-    title: "Mersin İlçelerinde Prefabrik, Çelik ve Yutong Ev | Enteks Prefabrik",
-    description: "Mersin'in 13 ilçesinde prefabrik ev, çelik ev ve Yutong ev kurulumu. İlçenizi seçin, ücretsiz keşif isteyin.",
+    title: "Mersin İlçelerinde Prefabrik, Çelik ve Ytong Ev | Enteks Prefabrik",
+    description: "Mersin'in 13 ilçesinde prefabrik ev, çelik ev ve Ytong ev kurulumu. İlçenizi seçin, ücretsiz keşif isteyin.",
     ld: [bc.ld],
-    body: `${bc.html}<section class="band"><h1>Mersin'in tüm ilçelerinde ev kurulumu</h1><p class="section-lead">Tarsus'taki atölyemizden Mersin'in doğusundan batısına kadar her ilçeye geliyoruz.</p>
-${districts.map((d) => `<article class="district-row"><h2><a href="${u(`/mersin/${d.slug}/`)}">${esc(d.name)}</a></h2><p>${esc(d.about)}</p><p class="row-links">${services.map((s) => `<a href="${u(`/mersin/${d.slug}/${s.slug}/`)}">${esc(d.name)} ${lc(s.name)}</a>`).join(" ")}</p></article>`).join("")}
+    body: `${bc.html}<section class="band"><h1>Mersin'in tüm ilçelerinde ev kurulumu</h1><p class="section-lead">Mersin'in doğusundan batısına, Tarsus'tan Anamur'a kadar her ilçeye geliyoruz.</p>
+${districts.map((d) => `<article class="district-row"><h2><a href="${u(`/mersin/${d.slug}/`)}">${esc(d.name)}</a></h2><p>${esc(d.about)}</p><p class="row-links">${services.map((s) => `<a href="${u(`/mersin/${d.slug}/${s.slug}/`)}">${esc(d.name)} ${sn(s)}</a>`).join(" ")}</p></article>`).join("")}
 </section>${quoteForm()}`,
   });
 }
@@ -350,20 +372,20 @@ for (const d of districts) {
   {
     const bc = breadcrumbs([{ name: "Ana sayfa", path: "/" }, { name: "Mersin", path: "/mersin/" }, { name: d.name, path: `/mersin/${d.slug}/` }]);
     const localFaq = [
-      { q: `${locative(d.name)} keşfe geliyor musunuz?`, a: `Evet. ${d.home ? "Merkezimiz Tarsus'ta olduğu için Tarsus'ta keşfi genellikle hızlı ayarlıyoruz." : `${d.name} için keşif gününü telefonda birlikte belirliyoruz.`} Keşif ve teklif ücretsizdir.` },
+      { q: `${locative(d.name)} keşfe geliyor musunuz?`, a: `Evet. ${d.home ? "Tarsus'ta en sık çalıştığımız bölge olduğu için keşfi genellikle hızlı ayarlıyoruz." : `${d.name} için keşif gününü telefonda birlikte belirliyoruz.`} Keşif ve teklif ücretsizdir.` },
       ...faqs.slice(0, 3),
     ];
     const f = faqBlock(localFaq, `${d.name} için sık sorulanlar`);
     add({
       path: `/mersin/${d.slug}/`,
       priority: d.home ? "0.95" : "0.8",
-      title: `${d.name} Prefabrik Ev, Çelik Ev, Yutong Ev | Enteks Prefabrik`,
-      description: `${locative(d.name)} prefabrik ev, çelik ev ve Yutong ev yapımı. ${d.demand} Ücretsiz keşif: ${C.phoneDisplay}`,
+      title: `${d.name} Prefabrik Ev, Çelik Ev, Ytong Ev | Enteks Prefabrik`,
+      description: `${locative(d.name)} prefabrik ev, çelik ev ve Ytong ev yapımı. ${d.demand} Ücretsiz keşif: ${C.phoneDisplay}`,
       ld: [bc.ld, f.ld],
       body: `${bc.html}
-<section class="hero"><div class="hero-text"><h1>${esc(locative(d.name))} prefabrik, çelik ve Yutong ev</h1><p class="lead">${esc(d.about)}</p>
+<section class="hero"><div class="hero-text"><h1>${esc(locative(d.name))} prefabrik, çelik ve Ytong ev</h1><p class="lead">${esc(d.about)}</p>
 <div class="hero-actions"><a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a><a class="btn btn-ghost" href="#teklif">Teklif formu</a></div></div>
-${drawing(pick(d.slug, services).slug)}</section>
+${photo(d.home ? "prefabrik-ev" : pick(d.slug, services).slug, { eager: true })}</section>
 <section class="band"><h2>${esc(d.name)} için ev tipleri</h2>${serviceCards(d.slug)}</section>
 <section class="band two-col"><div><h2>${esc(d.name)} arazisine göre öneriler</h2>${terr.map((t) => `<p>${esc(t.advice)}</p>`).join("")}</div>
 <div><h2>Çalıştığımız yerler</h2><p>${esc(d.demand)}</p><p>${esc(placesText)} başta olmak üzere ${esc(d.name)} genelinde keşfe geliyoruz.</p>
@@ -381,44 +403,45 @@ ${quoteForm({ place: d.name })}`,
       { name: "Ana sayfa", path: "/" },
       { name: s.name, path: `/${s.slug}/` },
       { name: d.name, path: `/mersin/${d.slug}/` },
-      { name: `${d.name} ${lc(s.name)}`, path },
+      { name: `${d.name} ${sn(s)}`, path },
     ]);
     const seed = d.slug + s.slug;
     const opener = pick(seed, [
-      `${locative(d.name)} ${lc(s.name)} yaptırmak isteyenler için keşiften anahtar teslimine kadar bütün işi üstleniyoruz.`,
-      `${d.name} ${lc(s.name)} projelerinde arsayı yerinde görüp planı ona göre çiziyoruz.`,
-      `${d.name} için ${lc(s.name)} ararken ilk adım ücretsiz keşif: arsanıza gelir, ölçer, seçenekleri anlatırız.`,
+      `${locative(d.name)} ${sn(s)} yaptırmak isteyenler için keşiften anahtar teslimine kadar bütün işi üstleniyoruz.`,
+      `${d.name} ${sn(s)} projelerinde arsayı yerinde görüp planı ona göre çiziyoruz.`,
+      `${d.name} için ${sn(s)} ararken ilk adım ücretsiz keşif: arsanıza gelir, ölçer, seçenekleri anlatırız.`,
     ]);
     const relModels = models.filter((m) => m.services.includes(s.slug));
     const localFaq = [
-      { q: `${d.name} ${lc(s.name)} fiyatı ne kadar?`, a: `${locative(d.name)} ${lc(s.name)} fiyatı metrekareye, plana, malzemeye ve arsanın ulaşımına göre değişir. Keşiften sonra yazılı ve kalem kalem teklif veriyoruz.` },
-      { q: `${locative(d.name)} hangi ${lc(s.name)} modelleri kurulabilir?`, a: `${relModels.map((m) => m.name).join(", ")} başta olmak üzere planı arsanıza göre uyarlıyoruz.` },
+      { q: `${d.name} ${sn(s)} fiyatı ne kadar?`, a: `${locative(d.name)} ${sn(s)} fiyatı metrekareye, plana, malzemeye ve arsanın ulaşımına göre değişir. Keşiften sonra yazılı ve kalem kalem teklif veriyoruz.` },
+      { q: `${locative(d.name)} hangi ${sn(s)} modelleri kurulabilir?`, a: `${relModels.map((m) => m.name).join(", ")} başta olmak üzere planı arsanıza göre uyarlıyoruz.` },
       ...faqs.slice(1, 4),
     ];
-    const f = faqBlock(localFaq, `${d.name} ${lc(s.name)} hakkında sorular`);
+    const f = faqBlock(localFaq, `${d.name} ${sn(s)} hakkında sorular`);
     add({
       path,
+      image: s.slug,
       priority: d.home ? "0.9" : "0.7",
       title: `${d.name} ${tc(s)} Fiyatları ve Modelleri | Enteks Prefabrik`,
-      description: `${locative(d.name)} ${lc(s.name)}: ${s.short} ${d.places[0]} ve çevresinde ücretsiz keşif. ${C.phoneDisplay}`,
-      ld: [bc.ld, f.ld, { "@context": "https://schema.org", "@type": "Service", name: `${d.name} ${lc(s.name)}`, serviceType: s.name, provider: { "@id": abs("/#isletme") }, areaServed: { "@type": "City", name: `${d.name}, Mersin` } }],
+      description: `${locative(d.name)} ${sn(s)}: ${s.short} ${d.places[0]} ve çevresinde ücretsiz keşif. ${C.phoneDisplay}`,
+      ld: [bc.ld, f.ld, { "@context": "https://schema.org", "@type": "Service", name: `${d.name} ${sn(s)}`, serviceType: s.name, provider: { "@id": abs("/#isletme") }, areaServed: { "@type": "City", name: `${d.name}, Mersin` } }],
       body: `${bc.html}
-<section class="hero"><div class="hero-text"><h1>${esc(d.name)} ${esc(lc(s.name))}</h1><p class="lead">${esc(opener)} ${esc(s.intro)}</p>
-<div class="hero-actions"><a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a><a class="btn btn-wa-ghost btn-ghost" href="${waLink(`Merhaba, ${d.name} için ${lc(s.name)} hakkında bilgi almak istiyorum.`)}" rel="noopener">WhatsApp'tan yaz</a></div></div>
-${drawing(s.slug)}</section>
-<section class="band two-col"><div><h2>${esc(d.name)} ${esc(lc(s.name))} avantajları</h2><ul class="ticks">${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>
+<section class="hero"><div class="hero-text"><h1>${esc(d.name)} ${esc(sn(s))}</h1><p class="lead">${esc(opener)} ${esc(s.intro)}</p>
+<div class="hero-actions"><a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a><a class="btn btn-wa-ghost btn-ghost" href="${waLink(`Merhaba, ${d.name} için ${sn(s)} hakkında bilgi almak istiyorum.`)}" rel="noopener">WhatsApp'tan yaz</a></div></div>
+${photo(s.slug, { eager: true })}</section>
+<section class="band two-col"><div><h2>${esc(d.name)} ${esc(sn(s))} avantajları</h2><ul class="ticks">${s.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>
 <div><h2>${esc(d.name)} iklimine uygun yapı</h2>${terr.map((t) => `<p>${esc(t.advice)} ${esc(t.heat)}</p>`).join("")}</div></section>
-<section class="band"><h2>${esc(d.name)} için ${esc(lc(s.name))} modelleri</h2><ul class="model-list">${relModels
+<section class="band"><h2>${esc(d.name)} için ${esc(sn(s))} modelleri</h2><ul class="model-list">${relModels
         .map((m) => `<li><a href="${u(`/modeller/${m.slug}/`)}"><h3>${esc(m.name)}</h3><p class="model-area">${esc(m.area)}</p><p>${esc(m.fit)}</p></a></li>`)
         .join("")}</ul><p class="note">Ölçüler örnektir; plan arsanıza ve isteğinize göre değişir.</p></section>
-<section class="band"><h2>${esc(d.name)} içinde nerelere kuruyoruz</h2><p>${esc(d.demand)} ${esc(placesText)} çevresi dahil ${esc(d.name)} genelinde ${esc(lc(s.plural))} için keşfe geliyoruz. En çok ${esc(listTr(s.uses.slice(0, 3)))} olarak isteniyor.</p>
+<section class="band"><h2>${esc(d.name)} içinde nerelere kuruyoruz</h2><p>${esc(d.demand)} ${esc(placesText)} çevresi dahil ${esc(d.name)} genelinde ${esc(snp(s))} için keşfe geliyoruz. En çok ${esc(listTr(s.uses.slice(0, 3)))} olarak isteniyor.</p>
 ${d.home ? `<p><a class="text-link" href="${u("/tarsus-mahalleleri/")}">Mahallenizi seçin</a></p>` : ""}</section>
 ${processBlock(d.name)}
 <section class="band"><h2>${esc(d.name)} için diğer ev tipleri</h2><ul class="district-grid">${services
         .filter((x) => x.slug !== s.slug)
-        .map((x) => `<li><a href="${u(`/mersin/${d.slug}/${x.slug}/`)}">${esc(d.name)} ${esc(lc(x.name))}</a></li>`)
+        .map((x) => `<li><a href="${u(`/mersin/${d.slug}/${x.slug}/`)}">${esc(d.name)} ${esc(sn(x))}</a></li>`)
         .join("")}</ul>
-<h2 class="sub">Diğer ilçelerde ${esc(lc(s.name))}</h2>${districtLinks(s.slug, d.slug)}</section>
+<h2 class="sub">Diğer ilçelerde ${esc(sn(s))}</h2>${districtLinks(s.slug, d.slug)}</section>
 ${f.html}
 ${quoteForm({ place: d.name, service: s.slug })}`,
     });
@@ -436,10 +459,10 @@ ${quoteForm({ place: d.name, service: s.slug })}`,
   add({
     path: "/tarsus-mahalleleri/",
     priority: "0.8",
-    title: "Tarsus Mahallelerinde Prefabrik Ev, Çelik Ev ve Yutong Ev | Enteks Prefabrik",
-    description: `Tarsus'un ${tarsusNeighborhoods.length} mahallesinde prefabrik ev, çelik ev ve Yutong ev kurulumu. Mahallenizi seçin, ücretsiz keşif isteyin.`,
+    title: "Tarsus Mahallelerinde Prefabrik Ev, Çelik Ev ve Ytong Ev | Enteks Prefabrik",
+    description: `Tarsus'un ${tarsusNeighborhoods.length} mahallesinde prefabrik ev, çelik ev ve Ytong ev kurulumu. Mahallenizi seçin, ücretsiz keşif isteyin.`,
     ld: [bc.ld],
-    body: `${bc.html}<section class="band"><h1>Tarsus mahallelerinde ev kurulumu</h1><p class="section-lead">Tarsus merkezli olduğumuz için ilçenin her mahallesine, köy kökenli mahallelerden şehir merkezine kadar keşfe geliyoruz.</p>
+    body: `${bc.html}<section class="band"><h1>Tarsus mahallelerinde ev kurulumu</h1><p class="section-lead">Mersin'den Tarsus'un her mahallesine, köy kökenli mahallelerden şehir merkezine kadar keşfe geliyoruz.</p>
 <div class="alpha">${Object.entries(groups)
       .map(([k, list]) => `<div class="alpha-group"><h2>${k}</h2><ul>${list.map((n) => `<li><a href="${u(`/tarsus/${n.slug}/`)}">${esc(n.name)}</a></li>`).join("")}</ul></div>`)
       .join("")}</div></section>${quoteForm({ place: "Tarsus" })}`,
@@ -472,26 +495,26 @@ tarsusNeighborhoods.forEach((n, i) => {
   const prev = tarsusNeighborhoods[(i - 1 + tarsusNeighborhoods.length) % tarsusNeighborhoods.length];
   const nexts = [1, 2, 3, 4].map((k) => tarsusNeighborhoods[(i + k) % tarsusNeighborhoods.length]);
   const localFaq = [
-    { q: `${full} için keşfe ne zaman gelebilirsiniz?`, a: `Merkezimiz Tarsus'ta olduğundan ${n.name} için keşfi kısa sürede planlıyoruz. Telefonla ya da WhatsApp'tan gün belirleyebilirsiniz.` },
-    { q: `${locative(n.name)} hangi ev tipini önerirsiniz?`, a: n.urban ? "Şehir içi arsalarda 1+1 ve 2+1 prefabrik ya da Yutong ev hızlı ve pratik olur; kalıcı oturum için çelik ev öneriyoruz." : "Bağ evi ve hafta sonu için prefabrik ya da Yutong ev, kalıcı aile evi için çelik ev öneriyoruz." },
+    { q: `${full} için keşfe ne zaman gelebilirsiniz?`, a: `Tarsus'ta sık çalıştığımız için ${n.name} keşfini kısa sürede planlıyoruz. Telefonla ya da WhatsApp'tan gün belirleyebilirsiniz.` },
+    { q: `${locative(n.name)} hangi ev tipini önerirsiniz?`, a: n.urban ? "Şehir içi arsalarda hızlı çözüm için 1+1 ve 2+1 prefabrik ev, kalıcı oturum için çelik ya da Ytong ev öneriyoruz." : "Bağ evi ve hafta sonu için prefabrik ev, kalıcı aile evi için çelik ya da Ytong ev öneriyoruz." },
     ...faqs.slice(0, 3),
   ];
   const f = faqBlock(localFaq, `${full} hakkında sorular`);
   add({
     path,
     priority: "0.6",
-    title: `${full} Prefabrik Ev, Çelik Ev, Yutong Ev | Enteks Prefabrik`,
-    description: `${full} ${n.urban ? "Mahallesi'nde" : "bölgesinde"} prefabrik ev, çelik ev ve Yutong ev yapımı. Tarsus merkezli ekip, ücretsiz keşif: ${C.phoneDisplay}`,
+    title: `${full} Prefabrik Ev, Çelik Ev, Ytong Ev | Enteks Prefabrik`,
+    description: `${full} ${n.urban ? "Mahallesi'nde" : "bölgesinde"} prefabrik ev, çelik ev ve Ytong ev yapımı. Ücretsiz keşif: ${C.phoneDisplay}`,
     ld: [bc.ld, f.ld],
     body: `${bc.html}
-<section class="hero"><div class="hero-text"><h1>${esc(full)} prefabrik, çelik ve Yutong ev</h1><p class="lead">${esc(context)}</p>
+<section class="hero"><div class="hero-text"><h1>${esc(full)} prefabrik, çelik ve Ytong ev</h1><p class="lead">${esc(context)}</p>
 <div class="hero-actions"><a class="btn btn-call" href="tel:${C.phoneIntl}">Ara: ${C.phoneDisplay}</a><a class="btn btn-ghost" href="${waLink(`Merhaba, Tarsus ${n.name} için ev hakkında bilgi almak istiyorum.`)}" rel="noopener">WhatsApp'tan yaz</a></div></div>
-${drawing(pick(n.slug, services).slug)}</section>
+${photo(pick(n.slug, services).slug, { eager: true })}</section>
 <section class="band"><h2>${esc(n.name)} için ev tipleri</h2><ul class="svc-list">${services
-      .map((s) => `<li><a href="${u(`/mersin/tarsus/${s.slug}/`)}"><h3>${esc(n.name)} ${esc(lc(s.name))}</h3><p>${esc(s.short)}</p></a></li>`)
+      .map((s) => `<li><a href="${u(`/mersin/tarsus/${s.slug}/`)}"><h3>${esc(n.name)} ${esc(sn(s))}</h3><p>${esc(s.short)}</p></a></li>`)
       .join("")}</ul></section>
 <section class="band two-col"><div><h2>${esc(n.name)} arazisine uygun yapı</h2><p>${esc(t.advice)}</p><p>${esc(t.heat)}</p></div>
-<div><h2>Neden Tarsus'tan bir ekip</h2><p>Atölyemiz Tarsus'ta. ${esc(n.name)} için malzeme taşıma ve ekip yolu kısa olduğundan keşif, kurulum ve sonrasındaki servis daha hızlı ilerliyor.</p></div></section>
+<div><h2>${esc(n.name)} için keşif</h2><p>Mersin'den Tarsus'a düzenli geliyoruz. ${esc(n.name)} arsanızı yerinde görür, zemini ve yolu inceler, planı ona göre çizeriz. Keşif ve teklif ücretsizdir.</p></div></section>
 ${processBlock(n.name)}
 <section class="band"><h2>Yakındaki diğer Tarsus mahalleleri</h2><ul class="district-grid">${[prev, ...nexts]
       .map((x) => `<li><a href="${u(`/tarsus/${x.slug}/`)}">${esc(x.name)}</a></li>`)
@@ -541,14 +564,14 @@ ${f.html}${quoteForm({ service: m.services[0] })}`,
     path: "/iletisim/",
     priority: "0.7",
     title: "İletişim | Enteks Prefabrik Tarsus Mersin",
-    description: `Enteks Prefabrik iletişim: ${C.phoneDisplay}. Tarsus merkezli, Mersin'in tüm ilçelerine prefabrik, çelik ve Yutong ev.`,
+    description: `Enteks Prefabrik iletişim: ${C.phoneDisplay}. Mersin'den Tarsus'a ve tüm ilçelere prefabrik, çelik ve Ytong ev.`,
     ld: [bc.ld],
     body: `${bc.html}<section class="band contact"><h1>Bize ulaşın</h1>
 <ul class="contact-list"><li><span>Telefon</span><a href="tel:${C.phoneIntl}">${C.phoneDisplay}</a></li>
 <li><span>WhatsApp</span><a href="${waLink("Merhaba, ev için bilgi almak istiyorum.")}" rel="noopener">${C.phoneDisplay}</a></li>
 <li><span>Instagram</span><a href="${C.instagram}" rel="noopener">@enteksprefabrik33</a></li>
 <li><span>TikTok</span><a href="${C.tiktok}" rel="noopener">@enteksprefabrik</a></li>
-<li><span>Hizmet bölgesi</span>Tarsus merkezli, Mersin'in tüm ilçeleri</li></ul></section>${quoteForm()}`,
+<li><span>Hizmet bölgesi</span>Mersin; Tarsus ve tüm ilçeler</li></ul></section>${quoteForm()}`,
   });
 }
 {
@@ -557,10 +580,10 @@ ${f.html}${quoteForm({ service: m.services[0] })}`,
     path: "/hakkimizda/",
     priority: "0.5",
     title: "Hakkımızda | Enteks Prefabrik Tarsus",
-    description: "Enteks Prefabrik, Tarsus merkezli olarak Mersin genelinde prefabrik ev, çelik ev ve Yutong ev üretip kuruyor.",
+    description: "Enteks Prefabrik, Mersin'den Tarsus'a ve tüm ilçelere prefabrik ev, çelik ev ve Ytong ev yapıyor.",
     ld: [bc.ld],
     body: `${bc.html}<section class="band prose"><h1>Enteks Prefabrik</h1>
-<p>Enteks Prefabrik, Tarsus'ta kurulu bir prefabrik ve çelik yapı firmasıdır. Mersin'in tüm ilçelerinde prefabrik ev, galvanizli hafif çelik ev ve Yutong tipi modüler ev üretiyor ve kuruyoruz.</p>
+<p>Enteks Prefabrik, Mersin'de prefabrik ev, galvanizli hafif çelik ev ve Ytong (gazbeton) ev yapan bir firmadır. Tarsus başta olmak üzere Mersin'in tüm ilçelerinde çalışıyoruz.</p>
 <p>İşe her zaman arsayı yerinde görerek başlıyoruz. Zemin, yol, güneş yönü ve iklim; planı ve malzemeyi belirleyen şeyler. Sahilde nem, yaylada kar, ovada yaz sıcağı için farklı çözümler uyguluyoruz.</p>
 <p>Çalışmalarımızı <a href="${C.instagram}" rel="noopener">Instagram</a> ve <a href="${C.tiktok}" rel="noopener">TikTok</a> hesaplarımızda paylaşıyoruz.</p></section>
 ${processBlock()}${callStrip("Arsanız için ücretsiz keşif isteyin.")}`,
@@ -596,6 +619,17 @@ writeFileSync(
   }).replace("<head>", '<head>\n<meta name="robots" content="noindex">')
 );
 for (const f of ["style.css", "main.js", "favicon.svg"]) copyFileSync(join(ROOT, "src", f), join(OUT, f));
+mkdirSync(join(OUT, "img"), { recursive: true });
+for (const f of readdirSync(join(ROOT, "src", "img"))) copyFileSync(join(ROOT, "src", "img", f), join(OUT, "img", f));
+
+// Eski "yutong-ev" adreslerini yeni "ytong-ev" sayfalarına yönlendir
+const redirect = (from, to) => {
+  const file = join(OUT, from, "index.html");
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Ytong ev</title><link rel="canonical" href="${abs(to)}"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=${u(to)}"></head><body><a href="${u(to)}">Ytong ev sayfasına git</a></body></html>`);
+};
+redirect("/yutong-ev/", "/ytong-ev/");
+for (const d of districts) redirect(`/mersin/${d.slug}/yutong-ev/`, `/mersin/${d.slug}/ytong-ev/`);
 writeFileSync(
   join(OUT, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages

@@ -326,3 +326,18 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .mobile-bar a:first-child { background: var(--signal); color: var(--signal-ink); }
 .mobile-bar a:last-child { background: var(--wa); color: #fff; }
 @media (min-width: 900px) { .mobile-bar { display: none; } }
+
+/* Fotoğraflar (firma afişleri, 4:5) */
+.photo { margin: 0; }
+.photo img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--pine);
+}
+.hero .photo { max-width: 520px; justify-self: center; width: 100%; }
+@media (min-width: 900px) { .hero .photo { justify-self: end; } }
+.svc-list .photo { margin-bottom: 14px; }
+.svc-list .photo img { aspect-ratio: 4 / 4.2; object-position: top; }

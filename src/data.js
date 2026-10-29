@@ -10,7 +10,7 @@ export const company = {
   instagram: "https://www.instagram.com/enteksprefabrik33/",
   tiktok: "https://www.tiktok.com/@enteksprefabrik",
   city: "Mersin",
-  base: "Tarsus",
+  base: "Mersin",
 };
 
 // Üç ana ürün. `slug` URL'de kullanılır.
@@ -46,19 +46,19 @@ export const services = [
     uses: ["kalıcı konut", "dubleks villa", "köy evi", "müstakil ev", "işyeri"],
   },
   {
-    slug: "yutong-ev",
-    name: "Yutong ev",
-    plural: "Yutong evler",
-    short: "Modern çizgili, geniş pencereli, hızlı kurulan modüler Yutong tipi ev.",
+    slug: "ytong-ev",
+    name: "Ytong ev",
+    plural: "Ytong evler",
+    short: "Hafif ve ısı yalıtımı yüksek Ytong (gazbeton) bloklarla örülen, kalıcı ve sağlam ev.",
     intro:
-      "Yutong tipi evler sade cepheleri, geniş camları ve modüler yapısıyla öne çıkar. Bahçe, yazlık ya da hafta sonu evi isteyenler için hızlı ve derli toplu bir çözümdür.",
+      "Ytong evde duvarlar gazbeton bloklarla örülür. Gazbeton hafiftir, ısıyı iyi yalıtır ve yanmaz; bu sayede ev yazın serin, kışın sıcak kalır. Sıva ve boyayla bitirildiğinde klasik bir müstakil evden farksız görünür.",
     points: [
-      "Modern cephe ve geniş cam yüzeyler",
-      "Modüller yan yana eklenerek büyütülebilir",
-      "Bahçe, yazlık ve hobi bahçesi için pratik",
-      "Kısa sürede teslim, düzenli şantiye",
+      "Gazbeton duvarlar ısı yalıtımında güçlüdür",
+      "Yanmaz malzeme, yangına karşı güvenli",
+      "Hafif duvarlar binaya daha az yük bindirir",
+      "Tek katlı, dubleks ve villa tipi planlara uygun",
     ],
-    uses: ["hobi bahçesi", "yazlık", "hafta sonu evi", "misafir evi", "ofis"],
+    uses: ["kalıcı konut", "villa", "müstakil ev", "yazlık", "köy evi"],
   },
 ];
 
@@ -98,7 +98,7 @@ export const districts = [
     terrain: ["ova", "yayla"],
     home: true,
     about:
-      "Tarsus, Çukurova ovasının batı ucunda, narenciye bahçeleri ve verimli tarım arazileriyle bilinen köklü bir ilçe. Merkezimiz burada olduğu için keşif ve kurulumu en hızlı yaptığımız yer de burası.",
+      "Tarsus, Çukurova ovasının batı ucunda, narenciye bahçeleri ve verimli tarım arazileriyle bilinen köklü bir ilçe. Mersin'de en çok çalıştığımız ilçelerin başında geliyor.",
     places: ["Gülek", "Yenice", "Kulak", "Kaburgediği", "Berdan Barajı çevresi"],
     demand:
       "Tarsus'ta en çok bahçe ve tarla içine bağ evi, köylerde kalıcı konut ve ova arazilerinde ek bina olarak kuruyoruz.",
@@ -134,7 +134,7 @@ export const districts = [
       "Toroslar, kent merkezinden Toros Dağları'na doğru uzanan geniş bir ilçe. Gözne gibi yayla mahalleleri yazın serinlemek isteyenlerin tercihi.",
     places: ["Gözne", "Arslanköy", "Musalı"],
     demand:
-      "Toroslar'da yayla evi ve hafta sonu evi olarak Yutong ve prefabrik modeller çok tercih ediliyor.",
+      "Toroslar'da yayla evi olarak prefabrik, kalıcı oturum için Ytong ve çelik ev tercih ediliyor.",
     neighbors: ["yenisehir", "akdeniz", "tarsus", "mezitli"],
   },
   {
@@ -262,7 +262,7 @@ export const models = [
     area: "35–45 m²",
     rooms: "1 oda, 1 salon, mutfak, banyo",
     fit: "Bağ evi, hobi bahçesi, tek kişi ya da çift için ideal başlangıç.",
-    services: ["prefabrik-ev", "yutong-ev"],
+    services: ["prefabrik-ev", "ytong-ev"],
   },
   {
     slug: "2-1-prefabrik-ev",
@@ -270,7 +270,7 @@ export const models = [
     area: "60–75 m²",
     rooms: "2 oda, 1 salon, mutfak, banyo",
     fit: "Küçük aileler ve yazlık kullanım için en çok tercih edilen plan.",
-    services: ["prefabrik-ev", "celik-ev", "yutong-ev"],
+    services: ["prefabrik-ev", "celik-ev", "ytong-ev"],
   },
   {
     slug: "3-1-celik-ev",
@@ -278,7 +278,7 @@ export const models = [
     area: "85–110 m²",
     rooms: "3 oda, 1 salon, mutfak, banyo, isteğe göre ebeveyn banyosu",
     fit: "Kalıcı oturum için geniş aile evi.",
-    services: ["celik-ev", "prefabrik-ev"],
+    services: ["celik-ev", "ytong-ev", "prefabrik-ev"],
   },
   {
     slug: "dubleks-celik-ev",
@@ -286,7 +286,7 @@ export const models = [
     area: "120 m² ve üzeri",
     rooms: "İki kat, 3–4 oda, iki banyo",
     fit: "Arsayı verimli kullanmak ve villa konforu isteyenler için.",
-    services: ["celik-ev"],
+    services: ["celik-ev", "ytong-ev"],
   },
   {
     slug: "bag-evi",
@@ -294,7 +294,7 @@ export const models = [
     area: "20–40 m²",
     rooms: "Açık plan yaşam alanı, mutfak köşesi, banyo",
     fit: "Bahçe, tarla ve narenciye arazisinde dinlenme evi.",
-    services: ["prefabrik-ev", "yutong-ev"],
+    services: ["prefabrik-ev"],
   },
   {
     slug: "santiye-ofis",
@@ -313,7 +313,7 @@ export const faqs = [
   },
   {
     q: "Kurulum ne kadar sürer?",
-    a: "Süre modele ve zemin hazırlığına bağlıdır. Prefabrik ve Yutong evler betonarmeye göre çok daha kısa sürede kurulur; çelik evlerde ince işler süreyi belirler. Kesin takvimi teklifle birlikte yazıyoruz.",
+    a: "Süre modele ve zemin hazırlığına bağlıdır. Prefabrik evler çok kısa sürede kurulur; çelik ve Ytong evlerde süreyi kaba inşaat ve ince işler belirler. Kesin takvimi teklifle birlikte yazıyoruz.",
   },
   {
     q: "Prefabrik ya da çelik ev için ruhsat gerekir mi?",
@@ -329,6 +329,6 @@ export const faqs = [
   },
   {
     q: "Mersin'in hangi ilçelerine hizmet veriyorsunuz?",
-    a: "Tarsus merkezli ekibimizle Akdeniz, Anamur, Aydıncık, Bozyazı, Çamlıyayla, Erdemli, Gülnar, Mezitli, Mut, Silifke, Toroslar ve Yenişehir dahil Mersin'in tüm ilçelerine gidiyoruz.",
+    a: "Mersin genelinde; Tarsus başta olmak üzere Akdeniz, Anamur, Aydıncık, Bozyazı, Çamlıyayla, Erdemli, Gülnar, Mezitli, Mut, Silifke, Toroslar ve Yenişehir dahil Mersin'in tüm ilçelerine gidiyoruz.",
   },
 ];
